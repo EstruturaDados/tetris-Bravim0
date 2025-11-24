@@ -1,4 +1,3 @@
-// tetris_stack.c
 // Nível Novato - Fila circular de 5 peças para "Tetris Stack"
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,14 +7,14 @@
 #define QUEUE_SIZE 5
 
 typedef struct {
-    char type;   // 'I','O','T','L' (pode ser char)
+    char type;   // 'I','O','T','L' (char)
     int id;      // identificador único
 } Piece;
 
 typedef struct {
     Piece items[QUEUE_SIZE];
-    int front;   // índice do elemento da frente (para ser removido)
-    int rear;    // índice onde será colocado no proximo elemento
+    int front;   //  elemento da frente (para ser removido)
+    int rear;    //  onde será colocado no proximo elemento
     int count;   // número de elementos que estão na fila
 } PieceQueue;
 
@@ -30,31 +29,27 @@ void preencherInicial(PieceQueue *q);
 void mostrarFila(const PieceQueue *q);
 void limparBufferEntrada(void);
 
-// contador de ids global (para assegurar ids únicos) 
+// contador de ids global 
 static int nextId = 1;
 
-// nomes possíveis das peças 
 const char POSSIBLE_TYPES[] = { 'I', 'O', 'T', 'L' };
 const int N_TYPES = sizeof(POSSIBLE_TYPES) / sizeof(POSSIBLE_TYPES[0]);
 
-// Inicializa a fila vazia 
+// Comecar a fila
 void initQueue(PieceQueue *q) {
     q->front = 0;
     q->rear = 0;
     q->count = 0;
 }
 
-// Verifica se esta vazia 
 int isEmpty(const PieceQueue *q) {
     return q->count == 0;
 }
 
-// Verifica se esta cheia 
 int isFull(const PieceQueue *q) {
     return q->count == QUEUE_SIZE;
 }
 
-// Enfileira: retorna 1 se OK, 0 se fila cheia 
 int enqueue(PieceQueue *q, Piece p) {
     if (isFull(q)) return 0;
     q->items[q->rear] = p;
@@ -63,7 +58,6 @@ int enqueue(PieceQueue *q, Piece p) {
     return 1;
 }
 
-// Desenfileira: retorna 1 se OK, 0 se vazia 
 int dequeue(PieceQueue *q, Piece *out) {
     if (isEmpty(q)) return 0;
     if (out) *out = q->items[q->front];
@@ -72,7 +66,6 @@ int dequeue(PieceQueue *q, Piece *out) {
     return 1;
 }
 
-/* Gera automaticamente uma peça (tipo aleatório e id único) */
 Piece gerarPeca(void) {
     Piece p;
     p.type = POSSIBLE_TYPES[rand() % N_TYPES];
@@ -80,7 +73,6 @@ Piece gerarPeca(void) {
     return p;
 }
 
-/* Preenche a fila inicial com 5 peças geradas */
 void preencherInicial(PieceQueue *q) {
     while (!isFull(q)) {
         Piece p = gerarPeca();
@@ -88,27 +80,20 @@ void preencherInicial(PieceQueue *q) {
     }
 }
 
-/* Mostra a fila (exibe os 5 slots e o que cada um contém) */
 void mostrarFila(const PieceQueue *q) {
     printf("\nEstado atual da fila (capacidade %d):\n", QUEUE_SIZE);
     printf("+----+------+------+\n");
     printf("|Pos | Type |  ID  |\n");
     printf("+----+------+------+\n");
 
-    /* iteramos pelas posições físicas 0..QUEUE_SIZE-1 e mostramos conteúdo
-       para facilitar visualização do buffer circular */
     for (int i = 0; i < QUEUE_SIZE; ++i) {
-        int logicalIndex = i; // posição física
         int occupied = 0;
-        int idx = q->front;
-        /* percorre elementos para ver se posição física contém um item válido */
+
         for (int k = 0; k < q->count; ++k) {
             int pos = (q->front + k) % QUEUE_SIZE;
-            if (pos == i) {
-                occupied = 1;
-                break;
-            }
+            if (pos == i) { occupied = 1; break; }
         }
+
         if (occupied) {
             Piece p = q->items[i];
             printf("| %2d |  %c   | %4d |\n", i, p.type, p.id);
@@ -118,28 +103,28 @@ void mostrarFila(const PieceQueue *q) {
     }
     printf("+----+------+------+\n");
     printf("Front index: %d, Rear index: %d, Count: %d\n", q->front, q->rear, q->count);
-    /* Mostrar ordem lógica (da frente para o fim) */
+
     if (!isEmpty(q)) {
         printf("Ordem (frente -> fim): ");
         for (int k = 0; k < q->count; ++k) {
             int pos = (q->front + k) % QUEUE_SIZE;
-            printf("[%c:%d]%s", q->items[pos].type, q->items[pos].id, (k==q->count-1) ? "" : " -> ");
+            printf("[%c:%d]%s", q->items[pos].type, q->items[pos].id,
+                   (k==q->count-1) ? "" : " -> ");
         }
         printf("\n");
-    } else {
-        printf("Fila vazia.\n");
     }
 }
 
-/* Limpa buffer de entrada para evitar problemas com fgets/scanf */
 void limparBufferEntrada(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF) {}
 }
 
-/* --- Programa principal com menu --- */
+// ------------- codigo MENU -------------------------
+
 int main(void) {
     srand((unsigned)time(NULL));
+
     PieceQueue queue;
     initQueue(&queue);
     preencherInicial(&queue);
@@ -152,6 +137,7 @@ int main(void) {
         printf("3) Inserir manualmente nova peça (enqueue)\n");
         printf("4) Sair\n");
         printf("Escolha uma opcao: ");
+
         if (scanf("%d", &opcao) != 1) {
             printf("Entrada inválida. Digite um número.\n");
             limparBufferEntrada();
@@ -160,49 +146,59 @@ int main(void) {
 
         if (opcao == 1) {
             mostrarFila(&queue);
+
         } else if (opcao == 2) {
             Piece removed;
             if (dequeue(&queue, &removed)) {
                 printf("\nVocê jogou a peça: Type=%c, ID=%d\n", removed.type, removed.id);
-                /* inserir automaticamente nova peça no final */
+
                 Piece nova = gerarPeca();
-                if (enqueue(&queue, nova)) {
-                    printf("Nova peça inserida automaticamente: Type=%c, ID=%d\n", nova.type, nova.id);
-                } else {
-                    /* teoricamente não deve ocorrer (depois do dequeue sempre há espaço),
-                       mas protegemos contra comportamento inesperado */
-                    printf("Erro: não foi possível inserir nova peça (fila cheia).\n");
-                }
+                enqueue(&queue, nova);
+
+                printf("Nova peça inserida automaticamente: Type=%c, ID=%d\n", nova.type, nova.id);
             } else {
                 printf("\nFila vazia. Nada para jogar.\n");
             }
+
             mostrarFila(&queue);
+
         } else if (opcao == 3) {
             if (isFull(&queue)) {
                 printf("\nFila cheia. Remova/jogue uma peça antes de inserir.\n");
             } else {
                 Piece p;
-                /* gerar peça automaticamente ao pedir ao usuário um tipo opcional.
-                   Aqui simplificamos: o usuário escolhe entre gerar aleatória ou
-                   escolher tipo manual */
+
                 printf("Deseja (1) gerar peça automaticamente ou (2) escolher tipo? ");
                 int sub;
-                if (scanf("%d", &sub) != 1) { limparBufferEntrada(); printf("Entrada inválida.\n"); continue; }
+
+                if (scanf("%d", &sub) != 1) {
+                    limparBufferEntrada();
+                    printf("Entrada inválida.\n");
+                    continue;
+                }
+
                 if (sub == 1) {
                     p = gerarPeca();
+
                 } else {
                     printf("Escolha tipo (I O T L): ");
-                    limparBufferEntrada();
+
+                    limparBufferEntrada();   // <-- corrigido!
                     char buf[10];
-                    if (!fgets(buf, sizeof(buf), stdin)) { printf("Erro leitura.\n"); continue; }
+                    fgets(buf, sizeof(buf), stdin); // <-- seguro agora
+
                     char ch = '\0';
-                    /* pegar primeiro caractere não espaço */
                     for (int i = 0; buf[i] != '\0'; ++i) {
-                        if (buf[i] != ' ' && buf[i] != '\t' && buf[i] != '\n' && buf[i] != '\r') { ch = buf[i]; break; }
+                        if (buf[i] != ' ' && buf[i] != '\n' && buf[i] != '\t') {
+                            ch = buf[i];
+                            break;
+                        }
                     }
-                    /* validar */
+
                     int valid = 0;
-                    for (int i = 0; i < N_TYPES; ++i) if (ch == POSSIBLE_TYPES[i]) valid = 1;
+                    for (int i = 0; i < N_TYPES; ++i)
+                        if (ch == POSSIBLE_TYPES[i]) valid = 1;
+
                     if (!valid) {
                         printf("Tipo inválido. Geração automática será usada.\n");
                         p = gerarPeca();
@@ -211,26 +207,22 @@ int main(void) {
                         p.id = nextId++;
                     }
                 }
+
                 if (enqueue(&queue, p)) {
                     printf("Peça inserida: Type=%c, ID=%d\n", p.type, p.id);
-                } else {
-                    printf("Erro: fila cheia, não foi possível inserir.\n");
                 }
+
             }
+
             mostrarFila(&queue);
+
         } else if (opcao == 4) {
             printf("Saindo...\n");
             break;
+
         } else {
             printf("Opcao inválida.\n");
         }
     }
-
     return 0;
 }
-
-
-
-
-    
-
